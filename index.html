@@ -99,6 +99,21 @@ details.dim summary span{color:var(--mut);font-weight:600}
 
 details.biz{background:var(--card);border-radius:var(--r);box-shadow:0 2px 12px rgba(16,24,40,.07);padding:14px;margin-top:12px}
 details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:pointer}
+details.fold>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:24px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"›";margin-left:auto;font-size:1.3rem;line-height:1;color:var(--mut);transition:transform .15s}
+details.fold[open]>summary::after{transform:rotate(90deg)}
+details.fold>summary i{font-style:normal}
+details.fold .fs{font-weight:600;font-size:.8rem;color:var(--mut);min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.fold[open]>summary{margin-bottom:8px}
+.inm{flex:1;min-width:0;margin:0 8px;font-weight:800;color:var(--navy);font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qrow{display:flex;align-items:stretch;gap:6px}
+.qrow input{text-align:center;min-width:0}
+.qrow button{flex:none;width:42px;border:1.5px solid var(--line);background:#fff;border-radius:11px;font-size:1.2rem;font-weight:800;color:var(--navy);cursor:pointer}
+.empty-items{text-align:center;color:var(--mut);font-size:.86rem;padding:14px 8px;border:1.5px dashed var(--line);border-radius:12px}
+.scanw{position:relative;flex:1;min-width:0}
+.scanw input{width:100%}
+.sg .sgnew{color:var(--navy);font-weight:800;justify-content:flex-start}
 
 /* customers */
 /* hist-card styled below */
@@ -287,17 +302,17 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     <button class="btn b-navy" style="width:100%;margin-top:12px" onclick="saveBizInfo()" data-t="btnSaveBiz">💾 Save business details</button>
   </details>
   
-  <div class="card">
-    <h2><i>🧾</i><span data-t="secInvoice">Invoice</span></h2>
+  <details class="biz fold" id="foldNo">
+    <summary><i>🧾</i><span data-t="secInvoice">Invoice</span><span class="fs" id="fsNo"></span></summary>
     <label data-t="lblInvNo">Invoice No</label><input id="invNo">
     <div class="row">
       <div><label data-t="lblDate">Date</label><input type="date" id="invDate"></div>
       <div><label data-t="lblTime">Time</label><input type="time" id="invTime"></div>
     </div>
-  </div>
+  </details>
 
-  <div class="card">
-    <h2><i>👤</i><span data-t="secCustomer">Customer</span></h2>
+  <details class="biz fold" id="foldCust">
+    <summary><i>👤</i><span data-t="secCustomer">Customer</span><span class="fs" id="fsCust"></span></summary>
     <label data-t="lblCust">Customer Name *</label>
     <div style="position:relative">
       <input id="custName" data-ph="phCust" placeholder="Type name — existing customers appear" autocomplete="off" oninput="suggestCust()" onfocus="suggestCust()">
@@ -311,37 +326,21 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     <input type="hidden" id="jobRef" value="">
     <input type="hidden" id="jobRefSelect" value="">
     <div id="custPrevBox" class="out-box hidden"><span id="prevLabel">Previous outstanding:</span> <span id="prevOut">Rs 0</span></div>
-  </div>
+  </details>
 
   <div class="card">
     <h2><i>🔩</i><span data-t="secItems">Items</span></h2>
-    <p class="hint" data-t="hintItems" style="margin:-4px 0 8px">Type an item name (or pick one you saved) and enter its price.</p>
     <div class="scanbar">
-      <input id="scanIn" placeholder="Scan or type barcode / item name, then Enter" enterkeyhint="go" autocomplete="off" onkeydown="scanKey(event)">
+      <div class="scanw"><input id="scanIn" placeholder="Search item or scan barcode…" enterkeyhint="search" autocomplete="off" oninput="scanSuggest()" onfocus="scanSuggest()" onkeydown="scanKey(event)"><div class="sg" id="scanSug"></div></div>
       <button type="button" class="btn b-navy" onclick="camOpen('bill')" title="Scan with camera">📷 Scan</button>
     </div>
     <div id="itemsBody"></div>
-    <div class="grid2" style="margin-top:8px">
-      <button class="btn b-ghost" style="width:100%" onclick="addItem()" data-t="btnAddItem">+ Add Item</button>
-      <button class="btn b-ghost" style="width:100%" onclick="openCustomItem()" data-t="btnCustomItem">+ Custom Item</button>
-    </div>
+    <div class="empty-items" id="itemsEmpty">Search an item above (or scan it). Price and quantity show up once you pick one.</div>
     <button class="btn b-ghost" style="width:100%;margin-top:8px" onclick="showTab('stock')">📦 Products, stock &amp; prices</button>
     <div id="pricePanel" class="hidden" style="margin-top:10px;background:#f1f5f9;border-radius:12px;padding:12px;border:1px solid var(--line)">
       <p class="hint" style="margin:0 0 8px" data-t="hintPrices">Change any price below — it is saved automatically and used the next time you pick that item. ↺ restores the original price, ✕ removes your own items.</p>
       <input id="priceSearch" placeholder="Search item..." oninput="renderPriceMgr()" autocomplete="off">
       <div id="priceList" style="max-height:340px;overflow:auto;margin-top:8px"></div>
-    </div>
-    <div id="customItemPanel" class="hidden" style="margin-top:10px;background:#f1f5f9;border-radius:12px;padding:12px;border:1px solid var(--line)">
-      <div style="font-weight:800;color:var(--navy);margin-bottom:8px" data-t="customItemTitle">Add custom item to list</div>
-      <label data-t="customNameEn">Name (English)</label>
-      <input id="customNameEn" placeholder="e.g. Item name">
-      <label data-t="customNameUr" style="margin-top:6px;display:block">Name (Urdu) — optional</label>
-      <input id="customNameUr" placeholder="مثلاً آئٹم کا نام" dir="rtl">
-      <div class="row" style="margin-top:8px"><div><label data-t="priceL">Price each (Rs)</label><input type="number" id="customPrice" min="0" step="any" inputmode="decimal" placeholder="0"></div><div><label data-t="qty">Qty</label><input type="number" id="customQty" value="1" min="0" step="any" inputmode="decimal"></div></div>
-      <div class="grid2" style="margin-top:10px">
-        <button class="btn b-navy" onclick="saveCustomItem()" data-t="btnSaveCustom">Save &amp; Add</button>
-        <button class="btn b-ghost" onclick="closeCustomItem()" data-t="btnCancel">Cancel</button>
-      </div>
     </div>
   </div>
 
@@ -363,8 +362,8 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     </div>
   </div>
 
-  <div class="card">
-    <h2><i>✍️</i><span data-t="secSign">Notes, Signature &amp; Stamp</span></h2>
+  <details class="biz fold" id="foldSign">
+    <summary><i>✍️</i><span data-t="secSign">Notes, Signature &amp; Stamp</span><span class="fs" id="fsSign"></span></summary>
     <label data-t="lblNotes">Notes</label>
     <textarea id="notes" rows="2">Payment due on receipt. Thank you for your business.</textarea>
     <label data-t="lblSign">Signature Name</label><input id="signName" placeholder="Name printed under the signature">
@@ -381,10 +380,10 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
       <div style="flex:1;min-width:180px"><strong id="bankTitle"></strong><div class="bank-lines" id="bankLines"></div></div>
       <canvas id="payQrPrev" width="164" height="164" style="width:110px;height:110px;border-radius:8px;background:#fff;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.25);image-rendering:pixelated" title="QR — also printed on the normal invoice"></canvas>
     </div>
-  </div>
+  </details>
 
-  <div class="card">
-    <h2><i>🖨️</i><span data-t="secOutput">Create Invoice</span></h2>
+  <details class="biz fold" id="foldOut">
+    <summary><i>🖨️</i><span data-t="secOutput">Create Invoice</span><span class="fs">print · share · download</span></summary>
     <button class="btn b-navy" style="width:100%" onclick="saveAndGenerate()" data-t="btnGen">💾 Save Invoice</button>
     <div class="grid2">
       <button class="btn b-green" onclick="downloadMini()" data-t="btnDlMini">Mini 58mm PNG</button>
@@ -416,9 +415,8 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     </details>
     <label class="ck" style="margin-top:12px"><input type="checkbox" id="autoBackup" checked><span data-t="lblAutoBk">Auto-backup after every save (recommended)</span></label>
     <p class="hint" data-t="hintPrint">Save first (updates customer history), then download or print. The invoice keeps the same number until you tap New Invoice.</p>
-  </div>
+  </details>
 
-  
 </section>
 
 <!-- ================= CUSTOMERS ================= -->
@@ -544,16 +542,18 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     <div id="stkList" style="margin-top:8px"></div>
   </div>
   <div class="card">
-    <h2><i>⚙️</i><span>Options &amp; backup</span></h2>
-    <label class="ck"><input type="checkbox" id="optAuto" onchange="lsSet(AUTOADD_KEY,this.checked?'1':'0')"><span>Remember new items typed on a bill (adds them to Products automatically, without stock counting)</span></label>
-    <label class="ck"><input type="checkbox" id="optOOS" onchange="lsSet(OOS_KEY,this.checked?'1':'0');renderStock()"><span>Allow selling items that are out of stock (not recommended — profit and stock go wrong)</span></label>
-    <label class="ck"><input type="checkbox" id="optExpSell" onchange="lsSet(EXPSELL_KEY,this.checked?'1':'0')"><span>Allow selling expired items</span></label>
-    <div class="grid2" style="margin-top:10px">
+    <h2><i>💾</i><span>Backup</span></h2>
+    <div class="grid2">
       <button class="btn b-navy" onclick="storeExport()">⬇️ Save store backup</button>
       <button class="btn b-ghost" onclick="el('storeImportFile').click()">⬆️ Restore backup</button>
     </div>
     <input type="file" id="storeImportFile" accept=".json" class="hidden" onchange="storeImport(event)">
     <p class="hint" style="margin-top:8px">Products, stock and expenses are kept on this phone. The backup file covers them (bills and customers have their own backup and cloud sync).</p>
+    <details class="dim" style="margin-top:10px"><summary><span style="color:var(--navy);font-weight:800">⚙️ Options</span></summary>
+      <label class="ck"><input type="checkbox" id="optAuto" onchange="lsSet(AUTOADD_KEY,this.checked?'1':'0')"><span>Add items picked from the price list to Products automatically (without stock counting)</span></label>
+      <label class="ck"><input type="checkbox" id="optOOS" onchange="lsSet(OOS_KEY,this.checked?'1':'0');renderStock()"><span>Allow selling items that are out of stock (not recommended — profit and stock go wrong)</span></label>
+      <label class="ck"><input type="checkbox" id="optExpSell" onchange="lsSet(EXPSELL_KEY,this.checked?'1':'0')"><span>Allow selling expired items</span></label>
+    </details>
   </div>
 </section>
 
@@ -580,6 +580,7 @@ details.biz summary{font-weight:800;color:var(--navy);font-size:.95rem;cursor:po
     <p class="hint" style="margin:0 0 6px">Rent, electricity, salaries, transport… Net profit = gross profit − expenses.</p>
     <div class="row"><div><label>Date</label><input id="exDate" type="date"></div><div><label>Amount (Rs)</label><input id="exAmt" type="number" inputmode="decimal" min="0" placeholder="0"></div></div>
     <label>What for</label><input id="exNote" placeholder="e.g. Shop rent, electricity bill">
+    <label class="ck"><input type="checkbox" id="exRec"><span>🔁 Repeats every month (rent, salaries, internet…) — counted in every month from the date above</span></label>
     <button class="btn b-navy" style="width:100%;margin-top:10px" onclick="expAdd()">➕ Add expense</button>
     <div id="exList" style="margin-top:10px"></div>
   </div>
@@ -1507,8 +1508,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const now=new Date();
   el('invDate').value=localDate(now);el('invTime').value=localTime(now);el('invNo').value=genInvNo();
   el('invNo').addEventListener('input',updatePrev);
-  addItem();
+  itemsEmptyUpd();
   document.addEventListener('click',e=>{document.querySelectorAll('.sg').forEach(b=>{if(!b.parentElement.contains(e.target))b.style.display='none'})});
+  try{new MutationObserver(()=>{itemsEmptyUpd();if(el('itemsBody').children.length)_dirty=true}).observe(el('itemsBody'),{childList:true})}catch(e){}
   setLang('en');
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   loadPrCfg();loadBizInfo();checkBackupNag();refreshPayQR();
@@ -1590,75 +1592,68 @@ function delCustomItem(i){
   if(!confirm(lang==='ur'?'یہ آئٹم حذف کریں؟':'Remove this item from your list?'))return;
   saveCustomItems(loadCustomItems().filter(x=>keyName(x.name)!==keyName(p.name)));renderPriceMgr();
 }
-function openCustomItem(){
-  el('customItemPanel').classList.remove('hidden');
-  el('customNameEn').value='';el('customNameUr').value='';el('customPrice').value='';el('customQty').value='1';
-  el('customNameEn').focus();
-}
-function closeCustomItem(){el('customItemPanel').classList.add('hidden')}
-function saveCustomItem(){
-  const name=(el('customNameEn').value||'').trim();
-  const nameUr=(el('customNameUr').value||'').trim()||name;
-  if(!name){alert(tr('customNeedName'));return}
-  const price=Math.max(0,+el('customPrice').value||0);
-  const qty=Math.max(0,+el('customQty').value||1);
-  storeItemPrice(name,price,nameUr);
-  closeCustomItem();
-  addItem({desc:name,mode:'qp',qty:qty,price:price});
-  try{toast(tr('customSaved'))}catch(e){}
-}
-
 function addItem(prefill){
   itemCount++;const id=itemCount;const n=document.querySelectorAll('#itemsBody .item-card').length+1;
   const card=document.createElement('div');card.className='item-card';card.id='item-row-'+id;
+  /* the item is picked from the search box above, so a row only ever exists for a chosen item: name, quantity, price */
   card.innerHTML=
-    '<div class="item-head"><b class="no">#'+n+'</b><button class="btn b-red b-sm" onclick="removeItem('+id+')">✕</button></div>'+
-    '<div class="search-w"><input id="desc-'+id+'" placeholder="'+esc(tr('phItem'))+'" oninput="itemSuggest('+id+');calc('+id+')" onfocus="itemSuggest('+id+')" autocomplete="off"><div class="sg" id="isg-'+id+'"></div></div>'+
-    '<div class="seg" id="seg-'+id+'">'+
-      '<button type="button" class="on" data-m="qp" data-ti="modeQP" onclick="setMode('+id+',\'qp\')">'+esc(tr('modeQP'))+'</button>'+
-      '<button type="button" data-m="lump" data-ti="modeLump" onclick="setMode('+id+',\'lump\')">'+esc(tr('modeLump'))+'</button>'+
-    '</div><input type="hidden" id="mode-'+id+'" value="qp">'+
-    '<div class="row" style="margin-top:8px">'+
-      '<div><label data-ti="qty">'+esc(tr('qty'))+'</label><input type="number" id="qty-'+id+'" onfocus="this.select()" value="1" min="0" step="any" inputmode="decimal" oninput="calc('+id+')"></div>'+
+    '<div class="item-head"><b class="no">#'+n+'</b><span class="inm" id="nm-'+id+'"></span><button class="btn b-red b-sm" onclick="removeItem('+id+')">✕</button></div>'+
+    '<input type="hidden" id="desc-'+id+'"><input type="hidden" id="det-'+id+'" value=""><input type="hidden" id="mode-'+id+'" value="qp">'+
+    '<div class="row" style="margin-top:4px">'+
+      '<div><label data-ti="qty">'+esc(tr('qty'))+'</label><div class="qrow"><button type="button" onclick="qStep('+id+',-1)" aria-label="less">−</button><input type="number" id="qty-'+id+'" onfocus="this.select()" value="1" min="0" step="any" inputmode="decimal" oninput="calc('+id+')"><button type="button" onclick="qStep('+id+',1)" aria-label="more">+</button></div></div>'+
       '<div id="pricebox-'+id+'"><label data-ti="priceL">'+esc(tr('priceL'))+'</label><input type="number" id="price-'+id+'" onfocus="this.select()" min="0" step="any" inputmode="decimal" placeholder="0" oninput="calc('+id+')"></div>'+
-      '<div id="lumpbox-'+id+'" class="hidden"><label data-ti="lumpAmtL">'+esc(tr('lumpAmtL'))+'</label><input type="number" id="lamt-'+id+'" onfocus="this.select()" min="0" step="any" inputmode="decimal" placeholder="0" oninput="calc('+id+')"></div>'+
     '</div>'+
     '<div class="pvline hidden" id="pvl-'+id+'"></div>'+
-    '<div style="margin-top:6px"><label data-ti="detL">'+esc(tr('detL'))+'</label><input type="text" id="det-'+id+'" placeholder="'+esc(tr('detPh'))+'" autocomplete="off" oninput="calc('+id+')"></div>'+
-    '<div class="row" style="margin-top:8px;align-items:flex-end">'+
-      '<div><label data-ti="amt">'+esc(tr('amt'))+'</label><span class="amt" id="amt-'+id+'">0</span></div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px">'+
+      '<div style="display:flex;align-items:baseline;gap:8px"><span data-ti="amt" style="font-size:.78rem;font-weight:700;color:var(--mut)">'+esc(tr('amt'))+'</span><span class="amt" id="amt-'+id+'" style="font-size:1.15rem">0</span></div>'+
       '<div class="hidden" id="savepr-'+id+'" style="text-align:right"><button type="button" class="btn b-ghost b-sm" onclick="saveDefaultPrice('+id+')" data-ti="savePriceBtn">'+esc(tr('savePriceBtn'))+'</button></div>'+
     '</div>';
   el('itemsBody').appendChild(card);
   if(prefill){
+    let pq=prefill.qty,pp=prefill.price;
+    if(prefill.mode==='lump'&&prefill.amount!=null){pq=1;pp=prefill.amount}   /* old lump-sum lines become qty 1 × amount */
     if(prefill.desc)el('desc-'+id).value=prefill.desc;
-    if(prefill.mode)setMode(id,prefill.mode);
-    if(prefill.qty!=null)el('qty-'+id).value=prefill.qty;
-    if(prefill.price!=null&&prefill.price!=='')el('price-'+id).value=prefill.price;
-    if(prefill.amount!=null)el('lamt-'+id).value=prefill.amount;
+    if(pq!=null)el('qty-'+id).value=pq;
+    if(pp!=null&&pp!=='')el('price-'+id).value=pp;
     if(prefill.pid){card.dataset.pid=prefill.pid;card.dataset.cost=prefill.cost||0}
   }
   calc(id);
 }
-function itemSuggest(id){
-  const q=keyName(v('desc-'+id));const box=el('isg-'+id);if(!box)return;
-  const qs=q.replace(/\s+/g,'');
-  const all=getAllPresets();
-  const list=all.map((p,i)=>({p,i})).filter(({p})=>!q||keyName(p.name).includes(q)||keyName(p.name).replace(/\s+/g,'').includes(qs)||(p.nameUr||'').includes(q)||keyName(p.cat).includes(q)||(p.barcode&&String(p.barcode).includes(q))).slice(0,40);
-  if(!list.length){box.style.display='none';return}
-  box.innerHTML=list.map(({p,i})=>'<div onclick="pickItem('+id+','+i+')"><span>'+esc(lang==='ur'?(p.nameUr||p.name):p.name)+'<small style="display:block">'+esc((p.cat||'')+(p.pid&&p.stock!=null?' · Stock '+p.stock:''))+'</small></span><b style="white-space:nowrap;color:var(--navy)">'+(p.price>0?'Rs '+num(p.price):'—')+'</b></div>').join('');
+function qStep(id,d){const q=el('qty-'+id);if(!q)return;q.value=Math.max(0,rnd3((+q.value||0)+d));calc(id);try{const row=el('item-row-'+id),P=row&&row.dataset.pid?prodById(row.dataset.pid):null;if(P&&d>0)stockWarn(P,+q.value)}catch(e){}}
+function itemsEmptyUpd(){const e=el('itemsEmpty');if(e)e.classList.toggle('hidden',!!document.querySelector('#itemsBody .item-card'))}
+/* ---- one search box: type a name or scan a barcode, pick from the list ---- */
+function scanMatches(val){
+  const q=keyName(val),qs=q.replace(/\s+/g,'');
+  if(!q)return[];
+  return getAllPresets().map((p,i)=>({p,i})).filter(({p})=>keyName(p.name).includes(q)||keyName(p.name).replace(/\s+/g,'').includes(qs)||(p.nameUr||'').includes(q)||keyName(p.cat).includes(q)||(p.barcode&&String(p.barcode).toLowerCase().includes(q))).slice(0,30);
+}
+function scanSuggest(){
+  const box=el('scanSug'),val=v('scanIn').trim();if(!box)return;
+  if(!val){box.style.display='none';return}
+  const list=scanMatches(val);
+  box.innerHTML=list.map(({p,i})=>'<div onclick="scanPick('+i+')"><span>'+esc(lang==='ur'?(p.nameUr||p.name):p.name)+'<small style="display:block">'+esc((p.cat||'')+(p.pid&&p.stock!=null?(p.cat?' · ':'')+'Stock '+p.stock:''))+'</small></span><b style="white-space:nowrap;color:var(--navy)">'+(p.price>0?'Rs '+num(p.price):'—')+'</b></div>').join('')
+    +'<div class="sgnew" onclick="scanNew()">➕ Add “'+esc(val.slice(0,40))+'” as a new product</div>';
   box.style.display='block';
 }
-function pickItem(id,i){
+function scanHide(){const b=el('scanSug');if(b)b.style.display='none'}
+function scanPick(i){
   const p=getAllPresets()[i];if(!p)return;
-  el('desc-'+id).value=cleanName(lang==='ur'?(p.nameUr||p.name):p.name);
-  el('isg-'+id).style.display='none';
-  if(v('mode-'+id)!=='qp')setMode(id,'qp');
-  el('price-'+id).value=p.price>0?p.price:'';
-  if(!(+v('qty-'+id)>0))el('qty-'+id).value=1;
-  const _row=el('item-row-'+id);if(p.pid){_row.dataset.pid=p.pid;_row.dataset.cost=p.cost||0}else{delete _row.dataset.pid;delete _row.dataset.cost}
-  calc(id);
-  if(p.pid)try{stockWarn(prodById(p.pid),+v('qty-'+id)||1)}catch(e){}
+  const inp=el('scanIn');inp.value='';scanHide();
+  const P=p.pid?prodById(p.pid):null;
+  if(P){beep();billAdd(P,1);return}
+  /* an item from the price list that is not a product yet */
+  const rows=[...document.querySelectorAll('#itemsBody .item-card')];
+  const row=rows.find(r=>!r.dataset.pid&&keyName(v('desc-'+r.id.replace('item-row-','')))===keyName(p.name));
+  if(row){const id=row.id.replace('item-row-','');el('qty-'+id).value=rnd3((+v('qty-'+id)||0)+1);calc(id);row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),700)}
+  else{addItem({desc:cleanName(lang==='ur'?(p.nameUr||p.name):p.name),qty:1,price:p.price>0?p.price:''});const last=[...document.querySelectorAll('#itemsBody .item-card')].pop();if(last){last.classList.add('flash');setTimeout(()=>last.classList.remove('flash'),700);try{last.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}}}
+  beep();
+}
+function scanNew(){
+  const val=v('scanIn').trim();scanHide();
+  if(!val)return;
+  el('scanIn').value='';
+  if(/^[A-Za-z0-9\-_.]{6,}$/.test(val)&&/\d/.test(val)&&!/\s/.test(val)){unknownCode(val,false);return}
+  prodEdit('',{name:val,after:p=>{billAdd(p,1)}});
 }
 function saveDefaultPrice(id){
   const name=cleanName(v('desc-'+id));const price=+v('price-'+id)||0;
@@ -1668,13 +1663,7 @@ function saveDefaultPrice(id){
   try{prodQuickSet(name,price)}catch(e){}
   calc(id);try{toast(tr('priceSaved'),true)}catch(e){}
 }
-function setMode(id,m){
-  el('mode-'+id).value=m;
-  document.querySelectorAll('#seg-'+id+' button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-  el('pricebox-'+id).classList.toggle('hidden',m!=='qp');
-  el('lumpbox-'+id).classList.toggle('hidden',m!=='lump');
-  calc(id);
-}
+function setMode(id,m){el('mode-'+id).value='qp';calc(id)}
 /* qp: amount = qty x price.   lump: amount is typed as it is — NOTHING is multiplied. */
 function itemCalc(id){
   const mode=v('mode-'+id)||'qp';
@@ -1692,7 +1681,8 @@ function calc(id){
   const mode=v('mode-'+id)||'qp';
   const c=itemCalc(id);
   el('amt-'+id).textContent=num(c.amount);
-  const pv=el('pvl-'+id);pv.classList.remove('hidden');
+  const nm=el('nm-'+id);if(nm)nm.textContent=cleanName(v('desc-'+id));
+  const pv=el('pvl-'+id);pv.classList.add('hidden');
   if(mode==='lump'){
     pv.textContent=c.amount>0?(tr('lumpNote')+' '+fmt(c.amount)+' · '+tr('qty')+' '+qtyFmt(c.qty)):tr('lumpEnter');
   }else{
@@ -1708,7 +1698,7 @@ function calc(id){
   recalcPay();
 }
 function renumber(){document.querySelectorAll('#itemsBody .item-card .no').forEach((b,i)=>b.textContent='#'+(i+1))}
-function removeItem(id){const e=el('item-row-'+id);if(e)e.remove();renumber();recalcPay()}
+function removeItem(id){const e=el('item-row-'+id);if(e)e.remove();renumber();recalcPay();itemsEmptyUpd()}
 function getItems(){
   const items=[];
   document.querySelectorAll('#itemsBody .item-card').forEach(card=>{
@@ -1792,7 +1782,7 @@ function saveAndGenerate(){
 }
 function newInvoice(){
   if(!confirm(lang==='ur'?'نئی انوائس شروع کریں؟ (موجودہ فارم صاف ہو جائے گا)':'Start a new invoice? The current form will be cleared.'))return;
-  el('itemsBody').innerHTML='';addItem();
+  el('itemsBody').innerHTML='';itemsEmptyUpd();
   ['custName','custHouse','custPhone','custContact','jobRef'].forEach(i=>el(i).value='');
   el('jobRefSelect').value='';el('advance').value=0;el('discount').value=0;
   const now=new Date();el('invDate').value=localDate(now);el('invTime').value=localTime(now);el('invNo').value=genInvNo();
@@ -1875,7 +1865,7 @@ function custPastItems(c,excludeInvNo){
 function loadCustToInv(id){
   if(getItems().length&&!confirm(lang==='ur'?'اس گاہک کے لیے نئی انوائس شروع کریں؟ موجودہ آئٹمز صاف ہو جائیں گے۔':'Start a new invoice for this customer? Current items will be cleared.'))return;
   // Do NOT load past items into the form — only show them on digital invoice
-  el('itemsBody').innerHTML='';addItem();
+  el('itemsBody').innerHTML='';itemsEmptyUpd();
   window._reusePastItems=null;
   ['jobRef'].forEach(i=>el(i).value='');el('jobRefSelect').value='';el('advance').value=0;el('discount').value=0;
   const now=new Date();el('invDate').value=localDate(now);el('invTime').value=localTime(now);el('invNo').value=genInvNo();
@@ -3345,6 +3335,17 @@ window.addEventListener('beforeunload',e=>{
 {const _s=saveAndGenerate;let busy=false;
  saveAndGenerate=function(){if(busy)return;busy=true;setTimeout(()=>{busy=false},800);return _s.apply(this,arguments)}}
 {const _n=newInvoice;newInvoice=function(){const r=_n.apply(this,arguments);try{if(!getItems().length){_dirty=false;focusScan()}}catch(_){}return r}}
+/* 4. one-line summaries on the folded sections; Create Invoice opens itself after a successful save */
+function foldSummaries(){
+  try{
+    const t=(id,x)=>{const e=el(id);if(e&&e.textContent!==x)e.textContent=x};
+    t('fsNo',[v('invNo'),v('invDate')].filter(Boolean).join(' · '));
+    t('fsCust',v('custName').trim()||(lang==='ur'?'عام گاہک':'Walk-in customer'));
+    t('fsSign',[v('signName').trim(),el('useSig')&&el('useSig').checked?'signature':'',el('useStamp')&&el('useStamp').checked?'stamp':''].filter(Boolean).join(' · '));
+  }catch(e){}
+}
+setInterval(foldSummaries,500);document.addEventListener('DOMContentLoaded',foldSummaries);
+{const _b2=bumpBackupCounter;bumpBackupCounter=function(){const r=_b2.apply(this,arguments);try{el('foldOut').open=true}catch(e){}return r}}
 /* 3. on a computer keep the cursor in the scan box so a scanner gun or typing starts the next item at once */
 function focusScan(){try{if(window.matchMedia&&matchMedia('(pointer:fine)').matches){const i=el('scanIn');if(i&&!el('panelInv').classList.contains('hidden'))i.focus()}}catch(e){}}
 {const _t=showTab;showTab=function(t){const r=_t.apply(this,arguments);if(t==='inv')focusScan();return r}}
@@ -3699,10 +3700,10 @@ function billAdd(p,qty){
   }
   if(row){id=row.id.replace('item-row-','');el('qty-'+id).value=rnd3((+v('qty-'+id)||0)+qty);calc(id)}
   else{
-    const empty=rows.find(r=>{const i=r.id.replace('item-row-','');return !v('desc-'+i).trim()&&!(+v('price-'+i)>0)&&!(+v('lamt-'+i)>0)});
+    const empty=rows.find(r=>{const i=r.id.replace('item-row-','');return !v('desc-'+i).trim()&&!(+v('price-'+i)>0)});
     if(empty)id=empty.id.replace('item-row-','');else{addItem();id=String(itemCount)}
     row=el('item-row-'+id);
-    el('desc-'+id).value=p.name;if(v('mode-'+id)!=='qp')setMode(id,'qp');
+    el('desc-'+id).value=p.name;
     el('price-'+id).value=p.price>0?p.price:'';el('qty-'+id).value=qty;
     row.dataset.pid=p.id;row.dataset.cost=p.cost||0;calc(id);
   }
@@ -3736,15 +3737,16 @@ function scanAdd(code,fromCam){
   return !!billAdd(p,1);
 }
 function scanKey(ev){
+  if(ev.key==='Escape'){scanHide();return}
   if(ev.key!=='Enter')return;ev.preventDefault();
-  const t=ev.target,val=t.value.trim();t.value='';if(!val)return;
-  if(prodByBarcode(val)){beep();scanAdd(val);t.focus();return}
-  const k=keyName(val),m=PROD.filter(p=>keyName(p.name).includes(k));
-  if(m.length===1){beep();billAdd(m[0],1);t.focus();return}
-  if(!m.length&&/^[A-Za-z0-9\-_.]{6,}$/.test(val)&&/\d/.test(val)){unknownCode(val,false);return}
-  const empty=[...document.querySelectorAll('#itemsBody .item-card')].find(r=>!v('desc-'+r.id.replace('item-row-','')).trim());
-  let id;if(empty)id=empty.id.replace('item-row-','');else{addItem();id=String(itemCount)}
-  el('desc-'+id).value=val;itemSuggest(id);el('desc-'+id).focus();
+  const t=ev.target,val=t.value.trim();if(!val)return;
+  if(prodByBarcode(val)){t.value='';scanHide();beep();scanAdd(val);t.focus();return}
+  const m=scanMatches(val);
+  if(m.length===1){scanPick(m[0].i);t.focus();return}
+  const exact=m.find(({p})=>keyName(p.name)===keyName(val));
+  if(exact){scanPick(exact.i);t.focus();return}
+  if(m.length){scanSuggest();return}            /* several matches: leave the list open so you tap the right one */
+  scanNew();
 }
 /* USB / Bluetooth scanner guns type very fast and end with Enter */
 let _kb='',_kt=0;
@@ -4106,7 +4108,7 @@ function renderProfit(){
   document.querySelectorAll('#pfSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===PF.mode));
   const from=day?PF.day:PF.month+'-01',to=day?PF.day:PF.month+'-31';
   const R=pfCollect(from,to);
-  const ex=EXPS.filter(x=>(x.date||'')>=from&&(x.date||'')<=to);const exT=ex.reduce((t,x)=>t+(+x.amount||0),0);
+  const ex=expForPeriod(from,to,day);const exT=ex.reduce((t,x)=>t+x.amt,0);
   const net=R.gross-exT;
   el('pfSales').textContent=fmt(R.sales);el('pfCogs').textContent=fmt(R.cogs);el('pfGross').textContent=fmt(R.gross);
   el('pfExp').textContent=fmt(exT);el('pfNet').textContent=fmt(net);el('pfCash').textContent=fmt(R.cash);el('pfCredit').textContent=fmt(R.credit);
@@ -4126,12 +4128,33 @@ function renderProfit(){
   el('pfTop').innerHTML=top.length?top.map(t=>`<div class="drow" style="cursor:default"><span class="dn" style="width:auto;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.n)}</span><span style="color:var(--mut)">×${rnd3(t.qty)}</span><span class="dv">${t.known?'+'+fmt(t.profit):fmt(t.sales)}</span></div>`).join('')+'<p class="hint" style="margin-top:6px">Shows profit where the cost price is known, otherwise sales.</p>':'<p class="hint">Nothing sold in this period.</p>';
   // expenses
   if(!el('exDate').value)el('exDate').value=day?PF.day:today;
-  el('exList').innerHTML=ex.length?ex.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>`<div class="drow" style="cursor:default"><span class="dn" style="width:auto;flex:1">${esc(x.date)} · ${esc(x.note||'Expense')}</span><span class="dv">${fmt(+x.amount||0)}</span><button class="pa" style="width:30px;height:30px" onclick="expDel('${x.id}')">🗑</button></div>`).join(''):'<p class="hint">No expenses recorded for this period.</p>';
+  el('exList').innerHTML=ex.length?ex.sort((a,b)=>(b.rec?1:0)-(a.rec?1:0)||(b.date||'').localeCompare(a.date||'')).map(x=>`<div class="drow" style="cursor:default"><span class="dn" style="width:auto;flex:1">${x.rec?'🔁 ':esc(x.date)+' · '}${esc(x.note||'Expense')}${x.rec?'<small style="display:block;color:var(--mut)">every month since '+esc((x.date||'').slice(0,7))+(day?' · '+fmt(+x.amount||0)+' ÷ '+daysIn(PF.day)+' days':'')+(x.end?' · stopped after '+esc(x.end):'')+'</small>':''}</span><span class="dv">${fmt(x.amt)}</span>${x.rec&&!x.end?`<button class="pa" style="width:auto;padding:0 8px;height:30px;font-size:.7rem" title="Stop counting it from next month" onclick="expStop('${x.id}')">⏹ Stop</button>`:''}<button class="pa" style="width:30px;height:30px" onclick="expDel('${x.id}')">🗑</button></div>`).join(''):'<p class="hint">No expenses recorded for this period.</p>';
+}
+function daysIn(ds){const y=+ds.slice(0,4),m=+ds.slice(5,7);return new Date(y,m,0).getDate()}
+/* one-off expenses fall on their date; a monthly one counts in every month from its first month until stopped
+   (in the daily view it is shared over the days of that month) */
+function expForPeriod(from,to,day){
+  const out=[],mon=(day?from:from.slice(0,7)+'-01').slice(0,7);
+  EXPS.forEach(x=>{
+    if(x.rec){
+      const sm=String(x.date||'').slice(0,7);
+      if(!sm||mon<sm||(x.end&&mon>x.end))return;
+      const a=+x.amount||0;out.push(Object.assign({},x,{amt:day?a/daysIn(from):a}));
+    }else if((x.date||'')>=from&&(x.date||'')<=to)out.push(Object.assign({},x,{amt:+x.amount||0}));
+  });
+  return out;
+}
+function expStop(id){
+  const x=EXPS.find(e=>e.id===id);if(!x)return;
+  const cur=PF.mode==='day'?PF.day.slice(0,7):PF.month;
+  if(!confirm('Stop counting “'+(x.note||'this expense')+'” after '+cur+'? Earlier months keep it.'))return;
+  x.end=cur;expPersist();renderProfit();
 }
 function expAdd(){
   const amt=+el('exAmt').value;if(!(amt>0)){toast('Enter the expense amount',false);return}
-  EXPS.push({id:nid(),date:el('exDate').value||localDate(new Date()),amount:amt,note:el('exNote').value.trim()});
-  expPersist();el('exAmt').value='';el('exNote').value='';renderProfit();toast('Expense added',true);
+  const rec=el('exRec').checked;
+  EXPS.push({id:nid(),date:el('exDate').value||localDate(new Date()),amount:amt,note:el('exNote').value.trim(),rec:rec?1:0});
+  expPersist();el('exAmt').value='';el('exNote').value='';el('exRec').checked=false;renderProfit();toast(rec?'Monthly expense added':'Expense added',true);
 }
 function expDel(id){if(!confirm('Delete this expense?'))return;EXPS=EXPS.filter(x=>x.id!==id);expPersist();renderProfit()}
 
