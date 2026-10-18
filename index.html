@@ -600,6 +600,13 @@ details.fold[open]>summary{margin-bottom:8px}
 </nav>
 
 
+<!-- low stock popup -->
+<div class="mdl hidden" id="lowModal" onclick="if(event.target===this)lowClose()"><div class="box">
+  <h2>⚠️ Low stock</h2>
+  <div id="lowList" style="margin-top:6px"></div>
+  <button class="btn b-navy" style="width:100%;margin-top:12px" onclick="lowClose()">OK</button>
+</div></div>
+
 <!-- product modal -->
 <div class="mdl hidden" id="prodModal" onclick="if(event.target===this)prodClose()"><div class="box">
   <h2 id="pTitle">Add product</h2>
@@ -3346,6 +3353,22 @@ function foldSummaries(){
 }
 setInterval(foldSummaries,500);document.addEventListener('DOMContentLoaded',foldSummaries);
 {const _b2=bumpBackupCounter;bumpBackupCounter=function(){const r=_b2.apply(this,arguments);try{el('foldOut').open=true}catch(e){}return r}}
+/* 5. after a bill is saved, pop up every item on it that is now at or below its stock alert (or finished) */
+function lowClose(){el('lowModal').classList.add('hidden')}
+function lowCheck(items){
+  const seen={},out=[];
+  (items||[]).forEach(it=>{
+    if(!it||!it.pid||seen[it.pid])return;seen[it.pid]=1;
+    const p=prodById(it.pid);if(!p||p.track===false)return;
+    const st=stockState(p);if(st!=='low'&&st!=='out')return;
+    const u=p.unit?' '+esc(p.unit):'';
+    out.push('<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #eef1f6"><b>'+esc(p.name)+'</b><span style="font-weight:800;color:'+(st==='out'?'var(--err)':'#b45309')+'">'+(st==='out'?'Out of stock':rnd3(p.stock)+u+' left')+(st==='low'&&+p.min>0?'<small style="display:block;font-weight:600;color:var(--mut);text-align:right">alert at '+rnd3(p.min)+u+'</small>':'')+'</span></div>');
+  });
+  if(!out.length)return;
+  el('lowList').innerHTML=out.join('');el('lowModal').classList.remove('hidden');
+  try{beep(false)}catch(e){}
+}
+{const _b3=bumpBackupCounter;bumpBackupCounter=function(){const r=_b3.apply(this,arguments);try{lowCheck(getItems())}catch(e){}return r}}
 /* 3. on a computer keep the cursor in the scan box so a scanner gun or typing starts the next item at once */
 function focusScan(){try{if(window.matchMedia&&matchMedia('(pointer:fine)').matches){const i=el('scanIn');if(i&&!el('panelInv').classList.contains('hidden'))i.focus()}}catch(e){}}
 {const _t=showTab;showTab=function(t){const r=_t.apply(this,arguments);if(t==='inv')focusScan();return r}}
